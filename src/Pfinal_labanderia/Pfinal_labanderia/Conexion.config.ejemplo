@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+	PLANTILLA de la conexión a SQL Server (este archivo SÍ se sube a GitHub, sin contraseña).
+
+	Pasos en cada computadora:
+	  1. Copiar este archivo en la misma carpeta con el nombre Conexion.config
+	     (en CMD: copy Conexion.config.ejemplo Conexion.config).
+	  2. Cambiar servidor, usuario y ESCRIBE_AQUI_TU_CONTRASENA por los datos reales.
+	  3. Compilar. Visual Studio copia Conexion.config junto al .exe.
+
+	Conexion.config está en .gitignore: así la contraseña nunca llega al repositorio público.
+-->
+<connectionStrings>
+	<add name="ConexionSQLServer"
+	     connectionString="Data Source=localhost,1433;Persist Security Info=True;Database=BD_LavanderiaGT; User ID=sa;Password=ESCRIBE_AQUI_TU_CONTRASENA;Pooling=False;MultipleActiveResultSets=False;Encrypt=False;TrustServerCertificate=True;"
+	     providerName="System.Data.SqlClient" />
+</connectionStrings>

@@ -24,10 +24,10 @@ entregas, procesos, tipos de prenda y servicios, con una pantalla de Inicio (das
 
 | Capa | Proyecto | Contenido actual |
 |---|---|---|
-| Entidad | `Entidad` | Una clase por tabla (`Cliente`, `Recepcion`, `Tarifa`, `Usuario`, `Entrega`, `Proceso`, `TipoPrenda`, `Servicio`) y apoyo (`OpcionLista`, `ResumenInicio`, `DatoGrafica`) |
-| Datos | `Datos` | `Conexion` y una clase `D...` por módulo, con consultas parametrizadas |
-| Negocio | `Negocio` | Una clase `N...` por módulo con las validaciones y reglas |
-| Presentación | `Pfinal_labanderia` | Formularios: `logoing`, `precentacion`, `inicio`, `clientes`, `usuarios`, `Tarifas`, `Recepciones`, `Entregas`, `Procesos`, `TiposPrenda`, `Servicios` |
+| Entidad | `Entidad` | Una clase por tabla (`Cliente`, `Recepcion`, `Tarifa`, `Usuario`, `Entrega`, `Proceso`, `TipoPrenda`, `Servicio`, `Rol`, `Acceso`) y apoyo (`OpcionLista`, `ResumenInicio`, `DatoGrafica`) |
+| Datos | `Datos` | `Conexion` y una clase `D...` por módulo (incluye `DLogin` y `DRol`), con consultas parametrizadas |
+| Negocio | `Negocio` | Una clase `N...` por módulo (incluye `NLogin` y `NRol`) con las validaciones y reglas |
+| Presentación | `Pfinal_labanderia` | Formularios: `logoing`, `precentacion`, `inicio`, `clientes`, `usuarios`, `Tarifas`, `Recepciones`, `Entregas`, `Procesos`, `TiposPrenda`, `Servicios`, `roles`; sesión en `SesionActual` |
 
 Referencias entre proyectos (tal como están hoy):
 
@@ -76,7 +76,10 @@ Requisitos: Git, Visual Studio con soporte para .NET Framework 4.8 y archivos `.
    ```
    Cambiar el servidor, el usuario y `ESCRIBE_AQUI_TU_CONTRASENA` por los datos de tu SQL Server y guardar.
    `Conexion.config` está en `.gitignore`: nunca se sube a GitHub.
-3. Abrir `src\Pfinal_labanderia\Pfinal_labanderia.slnx` con Visual Studio y compilar. Visual Studio descarga
+3. Si la base `BD_LavanderiaGT` todavía no tiene roles, ejecutar una vez `database\02_Login_Roles.sql`.
+   Crea los roles Administrador, Recepcionista y Operador y deja como Administrador al primer usuario.
+   Los demás usuarios necesitan un rol (se asigna en Usuarios) para poder iniciar sesión.
+4. Abrir `src\Pfinal_labanderia\Pfinal_labanderia.slnx` con Visual Studio y compilar. Visual Studio descarga
    los paquetes NuGet la primera vez.
 
 Si al compilar aparece el error **MSB3030** "No se pudo copiar el archivo ...\Conexion.config porque no se

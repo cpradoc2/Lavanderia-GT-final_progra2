@@ -356,6 +356,11 @@ código solo las líneas de estilo de la paginación.
 - Convertir a SHA-256 las 5 claves actuales en texto plano (documento 07, Login) — PENDIENTE.
 - ~~Retirar la contraseña de `App.config` antes de Git~~ — RESUELTO el 2026-10-24 (`Conexion.config`).
 - Cerrar el documento 01 y decidir el estado del 06 — PENDIENTE de autorización del estudiante.
+- Asignar rol a los 4 usuarios que no tienen (mgarcia, jperez, asanchez, rhernandez) — PENDIENTE (2026-10-30).
+- En Usuarios, "Nuevo" propone el primer rol de la lista (Administrador). Conviene decidir si debe quedar vacío
+  para obligar a elegir — PENDIENTE (2026-10-30).
+- El login acepta la clave en texto plano o en SHA-256 (transición del compañero). Al convertir las 5 claves a
+  SHA-256 se podría aceptar solo SHA-256 — PENDIENTE.
 
 ## 2026-10-30 · Documento 07 — Panel de navegación
 
@@ -525,3 +530,42 @@ código solo las líneas de estilo de la paginación.
 2026-10-30, aclaración del estudiante: CMD localizó `database\BD_LavanderiaGT.bak` en la copia del proyecto. Mide 6,410,240 bytes, fecha 30/10/2026, y `git check-ignore` confirma que Git lo excluye. También existe `C:\Respaldos\BD_LavanderiaGT.bak` con el mismo tamaño y fecha; no se comparó su contenido ni se probó restauración.
 
 2026-10-30 22:04, consulta sobre completar los puntos 2 y 3: se propuso generar un script de esquema a partir de la base integrada, preparar un script separado de datos sintéticos para todas las tablas y validar ambos junto con el `.bak` en una base de prueba. No se generaron ni ejecutaron scripts en esta respuesta.
+
+## 2026-10-30 · Unificación con el fork del compañero y maximizar/restaurar (pedido del estudiante)
+
+El estudiante pidió: tomar su proyecto como principal, unir los cambios del fork
+`FrozenCureBand/Lavanderia-GT-final_progra2`, aplicarles su paleta de colores, validar todo y permitir maximizar
+y restaurar la ventana sin cambiar el diseño. Decisiones del estudiante: centrar el diseño al maximizar, ejecutar
+`database\02_Login_Roles.sql` en su base y subir a su repositorio para que el compañero sincronice su fork.
+
+- **Unión:** el fork partía del commit `1c60b04`, igual que este `main`. Se unió con `git merge --ff-only`
+  (13 commits, sin conflictos). Remoto agregado: `companero`.
+- **Estructura restaurada:** el fork había borrado `Conexion.config.ejemplo` y los comentarios de `Program.cs`, y
+  cambiado `Conexion.config` a `Always`. Se restauraron la plantilla (desde `1c60b04`), los comentarios y
+  `PreserveNewest`; se conservaron sus clases nuevas en los `.csproj`.
+- **Base de datos:** se ejecutó `database\02_Login_Roles.sql` con `sqlcmd`. Resultado consultado: 3 roles
+  (Administrador 13 accesos, Recepcionista 4, Operador 3), 13 accesos, 39 filas rol-acceso. Solo `jlopez`
+  (IdUsuario 1) quedó con rol; los otros 4 usuarios no tienen rol y por eso no pueden iniciar sesión todavía.
+- **Diseño unificado (sin tocar ningún `.Designer.cs`, comprobado con `git diff`):**
+  - `roles.cs`: misma paleta, Segoe UI, tabla con el estilo de los CRUD, botones con icono (azul/rojo), tarjeta
+    blanca y escala por DPI. La lógica de sus 5 métodos no cambió.
+  - Menú: botón "Roles y accesos" con el mismo estilo que `bnt_usuarios` (copiado en código) e icono `UserShield`;
+    los botones permitidos se reacomodan sin huecos (`ReacomodarMenu`).
+  - Barra "Conectado | Rol": una sola vez, arriba del área de trabajo (antes aparecía dos veces y tapaba títulos).
+  - Usuarios: campo "Rol" debajo de "Estado", ubicado en `Load` con los controles del diseñador como referencia.
+- **Maximizar/restaurar:** al maximizar, `panelPrincipal` recibe un `Padding` igual por los lados y el formulario
+  abierto conserva su tamaño original centrado; al restaurar el margen vuelve a 0.
+- **Error corregido en `usuarios.cs`:** al seleccionar un usuario sin rol, `SelectedValue = null` lanzaba
+  `ArgumentNullException`. Además, el primer `SelectedIndex = -1` se ignoraba y quedaba "Administrador"
+  seleccionado (se habría asignado ese rol al editar). Ahora la lista queda sin selección.
+- **Comprobado con pruebas automáticas** (formularios invisibles, usuario y rol de prueba creados y borrados):
+  - compila (MSBuild 18.11.1, código 0);
+  - login: correcto entra como Administrador; incorrecto, vacío e inexistente se rechazan;
+  - menú Administrador: 13 botones sin huecos que abren su formulario; Recepcionista: 4 botones y sin "Roles";
+  - una sola barra de sesión y ningún formulario queda debajo de ella;
+  - maximizar/restaurar 3 vueltas y minimizar: el formulario mantiene 1055×691, queda centrado y vuelve igual;
+  - CRUD de roles (crear, editar, nombre vacío rechazado, rol con usuarios protegido, eliminar);
+  - pruebas anteriores repetidas: conexión 6/6, consulta/paginación, búsqueda, CRUD de los 8 módulos y selección.
+    En la prueba CRUD de Usuarios ahora el usuario de prueba lleva rol, porque la regla del compañero lo exige.
+  - la base quedó con 5 usuarios, 3 roles, 39 filas rol-acceso y 5 registros en clientes, recepciones y tarifas.
+- **Prueba del estudiante en Visual Studio (F5): PENDIENTE.**

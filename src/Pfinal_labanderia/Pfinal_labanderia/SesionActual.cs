@@ -23,6 +23,8 @@ namespace Pfinal_labanderia
                 Height = 30,
                 TextAlign = ContentAlignment.MiddleRight,
                 Padding = new Padding(8, 0, 16, 0),
+                // Colores y fuente de la paleta del proyecto (celeste con texto azul marino, Segoe UI).
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point),
                 BackColor = Color.FromArgb(232, 240, 253),
                 ForeColor = Color.FromArgb(16, 42, 110)
             };

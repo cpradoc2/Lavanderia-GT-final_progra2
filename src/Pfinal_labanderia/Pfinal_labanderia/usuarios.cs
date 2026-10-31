@@ -19,6 +19,7 @@ namespace Pfinal_labanderia
         private readonly NUsuario negocioUsuarios = new NUsuario();
         private readonly NRol negocioRoles = new NRol();
         private readonly ComboBox comboRol = new ComboBox();
+        private readonly Label etiquetaRol = new Label();
 
         // ---------------------------------------------------------------
         // PAGINACIÓN (solo en la capa Presentación)
@@ -55,11 +56,14 @@ namespace Pfinal_labanderia
         public usuarios()
         {
             InitializeComponent();
+            // Campo "Rol" creado por código (el Designer.cs no se modifica).
+            // Su posición y estilo se copian de los controles del diseñador en Load (UbicarCampoRol).
             comboRol.Name = "comboRolUsuario";
             comboRol.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboRol.Location = new Point(680, 125);
-            comboRol.Width = 250;
-            tabPage2.Controls.Add(new Label { Text = "Rol", Location = new Point(680, 100), AutoSize = true });
+            etiquetaRol.Name = "labelRol";
+            etiquetaRol.Text = "Rol";
+            etiquetaRol.AutoSize = true;
+            tabPage2.Controls.Add(etiquetaRol);
             tabPage2.Controls.Add(comboRol);
 
             // Los eventos se conectan aquí (y no en el Designer.cs, que no se modifica).
@@ -84,11 +88,29 @@ namespace Pfinal_labanderia
         private void FormularioUsuarios_Load(object sender, EventArgs e)
         {
             UbicarControlesPaginacion();
+            UbicarCampoRol();
             ConfigurarTabla();
             ConfigurarCampos();
             CargarRoles();
             ConsultarUsuarios();
             LimpiarCampos();
+        }
+
+        /// <summary>
+        /// Coloca "Rol" como una fila más, debajo de "Estado", con la misma separación entre filas
+        /// (la que hay entre "Correo" y "Estado"). Se usan los controles del diseñador como referencia
+        /// porque Windows ya los ajustó a la escala de la pantalla; así el campo nunca queda descuadrado.
+        /// </summary>
+        private void UbicarCampoRol()
+        {
+            int separacionFilas = label5.Top - label9.Top;           // Correo -> Estado
+            etiquetaRol.Font = label5.Font;                           // Misma fuente y color que las demás etiquetas.
+            etiquetaRol.ForeColor = label5.ForeColor;
+            etiquetaRol.Location = new Point(label5.Left, label5.Top + separacionFilas);
+
+            comboRol.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point);
+            comboRol.Width = textDescripcion.Width;                   // Mismo ancho que las cajas de texto.
+            comboRol.Location = new Point(textDescripcion.Left, etiquetaRol.Top + (textDescripcion.Top - label9.Top));
         }
 
         private void CargarRoles()
@@ -435,7 +457,19 @@ namespace Pfinal_labanderia
             textDescripcion.Text = usuario.Correo;
             radioActivo.Checked = usuario.Estado;
             radioInactivo.Checked = !usuario.Estado;
-            comboRol.SelectedValue = usuario.IdRol.HasValue ? (object)usuario.IdRol.Value : null;
+            // Si el usuario todavía no tiene rol, la lista queda sin selección (al guardar se pedirá uno).
+            // A una lista conectada a datos NO se le puede asignar SelectedValue = null: lanza ArgumentNullException.
+            if (usuario.IdRol.HasValue)
+            {
+                comboRol.SelectedValue = usuario.IdRol.Value;
+            }
+            else
+            {
+                // Se asigna DOS veces a propósito: en una lista conectada a datos, Windows Forms ignora el
+                // primer -1 y deja seleccionado el primer rol (Administrador). Así no se asigna un rol por error.
+                comboRol.SelectedIndex = -1;
+                comboRol.SelectedIndex = -1;
+            }
         }
 
         /// <summary>Después de guardar, editar o eliminar: avisa, vuelve a consultar y limpia los campos.</summary>

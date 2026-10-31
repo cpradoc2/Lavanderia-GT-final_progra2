@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using FontAwesome.Sharp;
 
 namespace Pfinal_labanderia
 {
@@ -16,14 +17,29 @@ namespace Pfinal_labanderia
         // Sirve para cerrarlo antes de abrir otro y no acumular formularios en memoria.
         private Form formularioActivo = null;
 
+        // Botón "Roles y accesos": se crea por código para no modificar precentacion.Designer.cs.
+        private readonly IconButton botonRoles = new IconButton();
+
+        // Botones del menú que el rol puede usar, en el orden en que aparecen (de arriba abajo).
+        private readonly List<Control> botonesPermitidos = new List<Control>();
+        private int inicioMenu;   // Posición del primer botón en el diseño.
+        private int pasoMenu;     // Separación entre botones en el diseño.
+
+        // Tamaño de panelPrincipal con la ventana normal (el "tamaño original" de los formularios).
+        private Size tamanoNormal = Size.Empty;
+
         public precentacion()
         {
             InitializeComponent();
-            SesionActual.MostrarEn(panelPrincipal);
+            MostrarBarraSesion();
+            CrearBotonRoles();
             ConfigurarAccesos();
 
             // Al abrir el menú principal (después del login) se muestra la pantalla de Inicio.
             this.Load += MenuPrincipal_Load;
+
+            // Al maximizar o restaurar la ventana se centra el formulario abierto (ver AjustarAreaDeTrabajo).
+            this.Resize += Precentacion_Resize;
 
             // Módulos integrados del proyecto LavanderiasMultinegocio.
             // Se conectan aquí para no modificar precentacion.Designer.cs.
@@ -33,29 +49,146 @@ namespace Pfinal_labanderia
             iconButton12.Click += btnServicios_Click;    // "Servicios"
             iconButton2.Click += btnDetalleRecepciones_Click; // "Detalle recepciones"
             iconButton11.Click += btnSucursales_Click;        // "Sucursales"
-            Button botonRoles = new Button { Name = "btnRoles", Text = "Roles y accesos", ForeColor = Color.White, BackColor = Color.FromArgb(14, 33, 74), FlatStyle = FlatStyle.Flat, Size = new Size(215, 36), Location = new Point(9, 706) };
-            panelBotones.AutoScroll = true;
-            panelBotones.AutoScrollMinSize = new Size(225, 748);
-            botonRoles.Click += (s, e) => AbrirFormularioEnPanel(new roles());
-            panelBotones.Controls.Add(botonRoles);
-            botonRoles.Visible = SesionActual.Accesos.Contains("roles");
         }
 
+        /// <summary>
+        /// Barra "Conectado | Rol" arriba del área de trabajo, a lo ancho y una sola vez.
+        /// Se agrega al formulario (no a panelPrincipal) para que el margen que se pone al maximizar
+        /// no la mueva. El orden en Controls decide cómo se acomodan los controles con Dock:
+        /// primero el menú (izquierda), luego la barra (arriba) y al final panelPrincipal (el resto).
+        /// </summary>
+        private void MostrarBarraSesion()
+        {
+            SesionActual.MostrarEn(this);
+            // Orden final en Controls: panelPrincipal (adelante), barra, panelBotones (atrás).
+            // Windows acomoda primero el de atrás: menú a la izquierda, luego la barra arriba y el panel ocupa el resto.
+            panelPrincipal.BringToFront();
+            panelBotones.SendToBack();
+        }
+
+        /// <summary>
+        /// Crea el botón "Roles y accesos" con el MISMO estilo que los demás botones del menú:
+        /// los colores, la fuente y el tamaño se copian de bnt_usuarios para que sean idénticos.
+        /// </summary>
+        private void CrearBotonRoles()
+        {
+            botonRoles.Name = "btnRoles";
+            botonRoles.Text = "Roles y accesos";
+            botonRoles.IconChar = IconChar.UserShield;
+            botonRoles.IconFont = bnt_usuarios.IconFont;
+            botonRoles.IconSize = bnt_usuarios.IconSize;
+            botonRoles.IconColor = bnt_usuarios.IconColor;
+            botonRoles.BackColor = bnt_usuarios.BackColor;
+            botonRoles.ForeColor = bnt_usuarios.ForeColor;
+            botonRoles.Font = bnt_usuarios.Font;
+            botonRoles.FlatStyle = bnt_usuarios.FlatStyle;
+            botonRoles.FlatAppearance.BorderSize = bnt_usuarios.FlatAppearance.BorderSize;
+            botonRoles.FlatAppearance.MouseOverBackColor = bnt_usuarios.FlatAppearance.MouseOverBackColor;
+            botonRoles.FlatAppearance.MouseDownBackColor = bnt_usuarios.FlatAppearance.MouseDownBackColor;
+            botonRoles.ImageAlign = bnt_usuarios.ImageAlign;
+            botonRoles.TextAlign = bnt_usuarios.TextAlign;
+            botonRoles.TextImageRelation = bnt_usuarios.TextImageRelation;
+            botonRoles.Padding = bnt_usuarios.Padding;
+            botonRoles.Cursor = bnt_usuarios.Cursor;
+            botonRoles.UseVisualStyleBackColor = false;
+            botonRoles.Click += (s, e) => AbrirFormularioEnPanel(new roles());
+            panelBotones.Controls.Add(botonRoles);
+            // Si hay muchos botones y la ventana es baja, el menú se puede desplazar.
+            panelBotones.AutoScroll = true;
+        }
+
+        /// <summary>Muestra solo los botones del menú que el rol del usuario tiene permitidos.</summary>
         private void ConfigurarAccesos()
         {
             string[,] mapa = { { "inicio", "bnt_inicio" }, { "clientes", "btn_clientes" }, { "recepciones", "bnt_recepcion" },
                 { "tarifas", "btn_tarifas" }, { "usuarios", "bnt_usuarios" }, { "entregas", "iconButton3" },
                 { "procesos", "iconButton5" }, { "tiposprenda", "iconButton9" }, { "servicios", "iconButton12" },
-                { "detalleRecepciones", "iconButton2" }, { "estadosProceso", "iconButton4" }, { "sucursales", "iconButton11" } };
+                { "detalleRecepciones", "iconButton2" }, { "estadosProceso", "iconButton4" }, { "sucursales", "iconButton11" },
+                { "roles", "btnRoles" } };
             for (int i = 0; i < mapa.GetLength(0); i++)
             {
                 bool permitido = SesionActual.Accesos.Contains(mapa[i, 0]);
-                foreach (Control control in Controls.Find(mapa[i, 1], true)) control.Visible = permitido;
+                foreach (Control control in Controls.Find(mapa[i, 1], true))
+                {
+                    control.Visible = permitido;
+                    if (permitido) botonesPermitidos.Add(control);
+                }
             }
+        }
+
+        /// <summary>
+        /// Se ejecuta en Load, cuando Windows ya ajustó los botones del diseñador a la escala de la pantalla.
+        /// "Roles y accesos" va debajo de "Usuarios" y los botones permitidos se ordenan como en el diseño.
+        /// </summary>
+        private void PrepararMenu()
+        {
+            pasoMenu = btn_clientes.Top - bnt_inicio.Top;
+            inicioMenu = bnt_inicio.Top;
+            botonRoles.Size = bnt_usuarios.Size;
+            botonRoles.Location = new Point(bnt_usuarios.Left, bnt_usuarios.Top + pasoMenu);
+            botonesPermitidos.Sort((a, b) => a.Top.CompareTo(b.Top));
+            ReacomodarMenu();
+        }
+
+        /// <summary>
+        /// Coloca los botones permitidos uno debajo del otro, SIN HUECOS (los ocultos no ocupan lugar).
+        /// Si no caben con la separación del diseño, se juntan un poco (mínimo 2 px entre botones);
+        /// si aun así no caben, el menú muestra una barra de desplazamiento.
+        /// </summary>
+        private void ReacomodarMenu()
+        {
+            if (botonesPermitidos.Count == 0 || pasoMenu == 0) return;
+            panelBotones.AutoScrollPosition = new Point(0, 0);   // Se acomoda desde arriba.
+            int alto = botonesPermitidos[0].Height;
+            int disponible = panelBotones.ClientSize.Height - inicioMenu - 4;
+            int paso = Math.Max(alto + 2, Math.Min(pasoMenu, disponible / botonesPermitidos.Count));
+            for (int i = 0; i < botonesPermitidos.Count; i++)
+            {
+                botonesPermitidos[i].Top = inicioMenu + i * paso;
+            }
+        }
+
+        /// <summary>
+        /// MAXIMIZAR / RESTAURAR.
+        /// - Ventana normal: el formulario abierto ocupa todo panelPrincipal, igual que siempre,
+        ///   y se recuerda ese tamaño como el "tamaño original".
+        /// - Ventana maximizada: panelPrincipal recibe un margen (Padding) igual por los cuatro lados.
+        ///   Como el formulario usa Dock = Fill, respeta ese margen: conserva su tamaño original y queda
+        ///   centrado, sin que su diseño cambie.
+        /// - Al restaurar, el margen vuelve a 0 y todo queda exactamente como antes.
+        /// </summary>
+        private void AjustarAreaDeTrabajo()
+        {
+            if (WindowState == FormWindowState.Minimized)
+            {
+                return;   // Minimizada: no se ve nada, así que no hay que acomodar.
+            }
+            if (WindowState == FormWindowState.Normal)
+            {
+                panelPrincipal.Padding = Padding.Empty;
+                tamanoNormal = panelPrincipal.ClientSize;
+                return;
+            }
+            if (tamanoNormal.IsEmpty)
+            {
+                return;   // Todavía no se conoce el tamaño original.
+            }
+            int margenX = Math.Max(0, (panelPrincipal.ClientSize.Width - tamanoNormal.Width) / 2);
+            int margenY = Math.Max(0, (panelPrincipal.ClientSize.Height - tamanoNormal.Height) / 2);
+            panelPrincipal.Padding = new Padding(margenX, margenY, margenX, margenY);
+        }
+
+        private void Precentacion_Resize(object sender, EventArgs e)
+        {
+            AjustarAreaDeTrabajo();
+            ReacomodarMenu();
         }
 
         private void MenuPrincipal_Load(object sender, EventArgs e)
         {
+            PrepararMenu();
+            AjustarAreaDeTrabajo();
+
             if (SesionActual.Accesos.Contains("inicio"))
             {
                 AbrirFormularioEnPanel(new inicio());
@@ -110,10 +243,12 @@ namespace Pfinal_labanderia
                 formularioHijo.FormBorderStyle = FormBorderStyle.None;
 
                 // 4. Ocupa todo el espacio disponible del panel.
+                //    (Al maximizar, ese espacio es el tamaño original centrado: ver AjustarAreaDeTrabajo.)
                 formularioHijo.Dock = DockStyle.Fill;
 
                 // 5. Se agrega al panel, se coloca al frente y se muestra.
-                SesionActual.MostrarEn(formularioHijo);
+                //    La barra "Conectado | Rol" ya está una sola vez arriba del área de trabajo;
+                //    no se agrega otra dentro del formulario porque taparía su título.
                 panelPrincipal.Controls.Add(formularioHijo);
                 formularioHijo.BringToFront();
                 formularioHijo.Show();
